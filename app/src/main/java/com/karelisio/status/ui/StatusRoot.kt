@@ -54,6 +54,10 @@ import com.karelisio.status.ui.nav.TweaksRoute
 import com.karelisio.status.ui.nav.UsageRoute
 import com.karelisio.status.ui.screens.DashboardScreen
 import com.karelisio.status.ui.screens.HistoryScreen
+import com.karelisio.status.ui.screens.PermissionsScreen
+import com.karelisio.status.ui.onboarding.OnboardingScreen
+import com.karelisio.status.ui.nav.OnboardingRoute
+import com.karelisio.status.ui.nav.PermissionsRoute
 import com.karelisio.status.ui.screens.TweaksScreen
 import com.karelisio.status.ui.screens.PresetEditScreen
 import com.karelisio.status.ui.screens.SystemAppsScreen
@@ -84,7 +88,7 @@ private val topLevels = listOf(
 )
 
 @Composable
-fun StatusRoot() {
+fun StatusRoot(startWithOnboarding: Boolean = false) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val haptics = LocalHapticFeedback.current
@@ -95,7 +99,7 @@ fun StatusRoot() {
             CompositionLocalProvider(LocalSharedScope provides this) {
                 NavHost(
                     navController = nav,
-                    startDestination = DashboardRoute,
+                    startDestination = if (startWithOnboarding) OnboardingRoute else DashboardRoute,
                     modifier = Modifier.fillMaxSize(),
                     enterTransition = { fadeIn(tween(260, delayMillis = 60)) + scaleIn(tween(320), initialScale = 0.96f) },
                     exitTransition = { fadeOut(tween(160)) },
@@ -159,4 +163,10 @@ private fun NavGraphBuilder.statusGraph(nav: NavHostController) {
     screen<AdvancedAccessRoute> { AdvancedAccessScreen(onBack = { nav.popBackStack() }) }
     screen<MoreRoute> { MoreScreen(onOpen = { nav.navigate(it) }) }
     screen<AlertsRoute> { AlertsScreen(onBack = { nav.popBackStack() }) }
+    screen<PermissionsRoute> { PermissionsScreen(onBack = { nav.popBackStack() }, onReplayOnboarding = { nav.navigate(OnboardingRoute) }) }
+    screen<OnboardingRoute> {
+        OnboardingScreen(onDone = {
+            nav.navigate(DashboardRoute) { popUpTo(nav.graph.id) { inclusive = true } }
+        })
+    }
 }
