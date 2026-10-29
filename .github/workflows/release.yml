@@ -1,12 +1,18 @@
 name: Release
 
-# Push a tag vX.Y.Z → signed APK + GitHub Release with changelog.
+# Bump the VERSION file and push to main → tag vX.Y.Z, signed APK and GitHub Release.
 on:
   push:
-    tags: ["v*.*.*"]
+    branches: [main]
+    paths: [VERSION]
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -22,7 +28,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Read VERSION
+        id: version
+        run: |
+          VERSION=$(tr -d ' \n\r' < VERSION)
+          VERSION=${VERSION#v}
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::VERSION doit être au format X.Y.Z (lu : '$VERSION')"; exit 1
+          fi
+          TAG="v$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags "https://github.com/${RELEASES_REPO}.git" "refs/tags/$TAG" >/dev/null 2>&1 \
+             || git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$TAG existe déjà, rien à publier. Incrémentez VERSION."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check signing secrets
+        if: steps.version.outputs.exists == 'false'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -32,27 +58,26 @@ jobs:
           for v in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
             if [ -z "${!v}" ]; then echo "::error::Secret $v manquant"; exit 1; fi
           done
-
-      - name: Decode keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
 
       - uses: actions/setup-java@v4
+        if: steps.version.outputs.exists == 'false'
         with:
           distribution: temurin
           java-version: 21
 
       - uses: android-actions/setup-android@v3
+        if: steps.version.outputs.exists == 'false'
         with:
           packages: "platforms;android-37.0 build-tools;37.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
+        if: steps.version.outputs.exists == 'false'
 
       - name: Build signed release APK
+        if: steps.version.outputs.exists == 'false'
         env:
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: ${{ github.ref_name }}
           SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -60,24 +85,26 @@ jobs:
         run: ./gradlew :app:assembleRelease --stacktrace
 
       - name: Verify signature and rename
+        if: steps.version.outputs.exists == 'false'
         id: apk
         run: |
           APK=app/build/outputs/apk/release/app-release.apk
           "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "$APK" | tee signature.txt
           if grep -q "CN=Android Debug" signature.txt; then echo "::error::APK signé avec la clé debug"; exit 1; fi
-          OUT="Status-${GITHUB_REF_NAME}.apk"
+          OUT="Status-${{ steps.version.outputs.tag }}.apk"
           cp "$APK" "$OUT"
           echo "file=$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Changelog
+        if: steps.version.outputs.exists == 'false'
         run: |
-          PREV=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          PREV=$(git describe --tags --abbrev=0 --match 'v*' HEAD 2>/dev/null || true)
           {
             echo "## Nouveautés"
             if [ -n "$PREV" ]; then
-              git log --no-merges --pretty="- %s" "$PREV..$GITHUB_REF_NAME"
+              git log --no-merges --pretty="- %s" "$PREV..HEAD"
             else
-              git log --no-merges --pretty="- %s" "$GITHUB_REF_NAME"
+              git log --no-merges --pretty="- %s" HEAD
             fi
             echo
             echo "versionCode ${{ github.run_number }}"
@@ -85,22 +112,24 @@ jobs:
           cat CHANGELOG.md
 
       - name: Release (this repository)
-        if: env.RELEASES_REPO == github.repository
+        if: steps.version.outputs.exists == 'false' && env.RELEASES_REPO == github.repository
         uses: softprops/action-gh-release@v2
         with:
-          name: Status ${{ github.ref_name }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Status ${{ steps.version.outputs.tag }}
           body_path: CHANGELOG.md
           files: ${{ steps.apk.outputs.file }}
           make_latest: true
 
       - name: Release (public releases repository)
-        if: env.RELEASES_REPO != github.repository
+        if: steps.version.outputs.exists == 'false' && env.RELEASES_REPO != github.repository
         uses: softprops/action-gh-release@v2
         with:
           repository: ${{ env.RELEASES_REPO }}
           token: ${{ secrets.RELEASES_TOKEN }}
-          tag_name: ${{ github.ref_name }}
-          name: Status ${{ github.ref_name }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Status ${{ steps.version.outputs.tag }}
           body_path: CHANGELOG.md
           files: ${{ steps.apk.outputs.file }}
           make_latest: true

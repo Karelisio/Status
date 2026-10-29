@@ -48,16 +48,14 @@ Aucun fichier sensible n'est commité : `.gitignore` exclut `*.jks`, `*.keystore
 
 ### 2. Publier une version
 
-1. Fusionner la branche dans `main`.
-2. Créer un tag `vX.Y.Z` et le pousser :
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-3. Le workflow **Release** fait le reste :
-   - il construit l'APK signé (`versionCode = github.run_number`, `versionName` = le tag) ;
+1. Incrémenter le fichier `VERSION` à la racine (format `X.Y.Z`, par ex. `1.0.1`).
+2. Pousser sur `main`.
+3. Le workflow **Release** se déclenche dès que `VERSION` change sur `main` (ou à la main via *Run workflow*) :
+   - il construit l'APK signé (`versionName` = `VERSION`, `versionCode = github.run_number`) ;
    - il vérifie que l'APK n'est pas signé avec la clé debug ;
-   - il crée la GitHub Release avec `Status-vX.Y.Z.apk` et un changelog tiré des commits depuis le tag précédent.
+   - il crée le tag `vX.Y.Z` et la GitHub Release avec `Status-vX.Y.Z.apk` et un changelog tiré des commits depuis le tag précédent.
+
+Si le tag existe déjà, rien n'est publié : il faut incrémenter `VERSION`.
 
 Le dépôt est public, donc les APK sont publiés dans ses propres Releases. L'appli interroge `Karelisio/Status/releases/latest`.
 

@@ -6,9 +6,9 @@ plugins {
     alias(libs.plugins.roborazzi)
 }
 
-// Values injected by CI (see .github/workflows/release.yml); local builds fall back to defaults.
+// versionName comes from the VERSION file at the repo root; versionCode is injected by CI (github.run_number).
 val ciVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
-val ciVersionName = System.getenv("VERSION_NAME")?.removePrefix("v") ?: "0.1.0-dev"
+val ciVersionName = rootProject.file("VERSION").takeIf { it.exists() }?.readText()?.trim()?.removePrefix("v")?.takeIf { it.isNotEmpty() } ?: "0.0.0"
 val releasesRepo = System.getenv("RELEASES_REPO")?.takeIf { it.isNotBlank() } ?: "Karelisio/Status"
 
 android {
