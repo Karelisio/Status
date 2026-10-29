@@ -19,6 +19,9 @@ interface SnapshotDao {
     @Query("SELECT * FROM snapshots ORDER BY timestamp DESC LIMIT 1")
     suspend fun latest(): SnapshotEntity?
 
+    @Query("SELECT * FROM snapshots WHERE event != 0 ORDER BY timestamp DESC LIMIT 1")
+    suspend fun latestPlugEvent(): SnapshotEntity?
+
     @Query("DELETE FROM snapshots WHERE timestamp < :before")
     suspend fun purgeBefore(before: Long): Int
 

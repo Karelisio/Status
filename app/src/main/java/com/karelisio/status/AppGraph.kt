@@ -64,6 +64,9 @@ object AppGraph {
 
     /** Called by the 15-minute worker after the snapshot is stored. */
     suspend fun onPeriodicTick() {
+        val plugged = metrics.battery.read().plugged != 0
+        HistoryRecorder.reconcile(plugged)
+        if (!plugged) alerts.onUnplugged()
         alerts.checkStorage()
         alerts.checkPlan()
         alerts.onBattery(metrics.battery.read())

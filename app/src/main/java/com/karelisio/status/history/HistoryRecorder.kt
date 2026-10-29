@@ -18,11 +18,21 @@ object HistoryRecorder {
         if (event != SnapshotEntity.EVENT_PERIODIC) {
             val last = lastEventAt[event] ?: 0L
             if (now - last < 15_000) return null
+            // Several sources report the same transition (receiver, charging job, service):
+            // only record a plug event if it changes the state.
+            if (AppGraph.database.snapshots().latestPlugEvent()?.event == event) return null
             lastEventAt[event] = now
         }
         val snapshot = AppGraph.metrics.snapshot(event)
         AppGraph.database.snapshots().insert(snapshot)
         snapshot
+    }
+
+    /** Closes a charge session whose unplug was missed while the process was dead. */
+    suspend fun reconcile(plugged: Boolean) {
+        val last = AppGraph.database.snapshots().latestPlugEvent()?.event
+        if (!plugged && last == SnapshotEntity.EVENT_PLUGGED) record(SnapshotEntity.EVENT_UNPLUGGED)
+        if (plugged && last != SnapshotEntity.EVENT_PLUGGED) record(SnapshotEntity.EVENT_PLUGGED)
     }
 
     suspend fun purge(): Int =
