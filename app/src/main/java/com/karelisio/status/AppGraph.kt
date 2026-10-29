@@ -1,8 +1,11 @@
 package com.karelisio.status
 
 import android.content.Context
+import com.karelisio.status.data.db.SnapshotEntity
 import com.karelisio.status.data.db.StatusDatabase
 import com.karelisio.status.data.prefs.SettingsStore
+import com.karelisio.status.history.HistoryRecorder
+import com.karelisio.status.history.HistoryRepository
 import com.karelisio.status.metrics.MetricsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,8 +21,21 @@ object AppGraph {
     val database by lazy { StatusDatabase.create(app) }
     val settings by lazy { SettingsStore(app) }
     val metrics by lazy { MetricsRepository(app, scope) }
+    val history by lazy { HistoryRepository(database.snapshots()) }
 
     fun init(context: Context) {
-        app = context.applicationContext
+        if (!::app.isInitialized) app = context.applicationContext
+    }
+
+    suspend fun onPowerConnected() {
+        HistoryRecorder.record(SnapshotEntity.EVENT_PLUGGED)
+    }
+
+    suspend fun onPowerDisconnected() {
+        HistoryRecorder.record(SnapshotEntity.EVENT_UNPLUGGED)
+    }
+
+    /** Called by the 15-minute worker after the snapshot is stored. */
+    suspend fun onPeriodicTick() {
     }
 }

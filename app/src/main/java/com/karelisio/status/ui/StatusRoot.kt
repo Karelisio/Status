@@ -53,6 +53,9 @@ import com.karelisio.status.ui.nav.MoreRoute
 import com.karelisio.status.ui.nav.TweaksRoute
 import com.karelisio.status.ui.nav.UsageRoute
 import com.karelisio.status.ui.screens.DashboardScreen
+import com.karelisio.status.ui.screens.HistoryScreen
+import com.karelisio.status.ui.screens.BatteryDetailScreen
+import com.karelisio.status.ui.nav.BatteryDetailRoute
 import com.karelisio.status.ui.screens.PlaceholderScreen
 import kotlin.reflect.KClass
 
@@ -132,7 +135,8 @@ inline fun <reified T : Any> NavGraphBuilder.screen(noinline content: @Composabl
 
 private fun NavGraphBuilder.statusGraph(nav: NavHostController) {
     screen<DashboardRoute> { DashboardScreen(onOpen = { nav.navigate(it) }) }
-    screen<HistoryRoute> { PlaceholderScreen("Historique") }
+    screen<HistoryRoute> { HistoryScreen() }
+    screen<BatteryDetailRoute> { BatteryDetailScreen(onBack = { nav.popBackStack() }) }
     screen<UsageRoute> { PlaceholderScreen("Usage") }
     screen<TweaksRoute> { PlaceholderScreen("Tweaks") }
     screen<MoreRoute> { PlaceholderScreen("Plus") }
