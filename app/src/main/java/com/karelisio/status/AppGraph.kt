@@ -19,6 +19,8 @@ import com.karelisio.status.tweaks.CaffeineScheduler
 import com.karelisio.status.tweaks.SettingsBackend
 import com.karelisio.status.tweaks.TweakBackup
 import com.karelisio.status.tweaks.TweakManager
+import com.karelisio.status.tiles.BaseTile
+import com.karelisio.status.widget.StatusWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,14 +52,14 @@ object AppGraph {
     suspend fun onPowerConnected(startService: Boolean = true) {
         HistoryRecorder.record(SnapshotEntity.EVENT_PLUGGED)
         if (startService && settings.current().chargingServiceEnabled) MonitorService.start(app)
-        updateWidgets()
+        updateWidgets(force = true)
     }
 
     suspend fun onPowerDisconnected() {
         HistoryRecorder.record(SnapshotEntity.EVENT_UNPLUGGED)
         alerts.onUnplugged()
         ChargingTriggerWorker.arm(app, replace = true)
-        updateWidgets()
+        updateWidgets(force = true)
     }
 
     /** Called by the 15-minute worker after the snapshot is stored. */
@@ -65,7 +67,7 @@ object AppGraph {
         alerts.checkStorage()
         alerts.checkPlan()
         alerts.onBattery(metrics.battery.read())
-        updateWidgets()
+        updateWidgets(force = true)
     }
 
     suspend fun onBoot() {
@@ -83,9 +85,11 @@ object AppGraph {
         else MonitorService.stop(app)
     }
 
-    suspend fun updateWidgets() {
+    suspend fun updateWidgets(force: Boolean = false) {
+        StatusWidget.updateAll(app, force)
     }
 
     fun refreshTiles() {
+        BaseTile.requestRefreshAll(app)
     }
 }
