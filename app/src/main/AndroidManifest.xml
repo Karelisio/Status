@@ -2,13 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Lets Pilote (signed with the same key) apply presets and read the preset list. -->
-    <permission
-        android:name="${applicationId}.permission.CONTROL"
-        android:description="@string/permission_control_desc"
-        android:label="@string/permission_control_label"
-        android:protectionLevel="signature" />
-
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -173,21 +166,9 @@
                 android:resource="@xml/status_widget_info" />
         </receiver>
 
-        <!-- Pilote integration -->
         <receiver
-            android:name=".pilote.ApplyPresetReceiver"
-            android:exported="true"
-            android:permission="${applicationId}.permission.CONTROL">
-            <intent-filter>
-                <action android:name="com.karelisio.status.action.APPLY_PRESET" />
-            </intent-filter>
-        </receiver>
+            android:name=".update.InstallResultReceiver"
+            android:exported="false" />
 
-        <provider
-            android:name=".pilote.PresetsProvider"
-            android:authorities="${applicationId}.presets"
-            android:exported="true"
-            android:readPermission="${applicationId}.permission.CONTROL"
-            android:writePermission="${applicationId}.permission.CONTROL" />
     </application>
 </manifest>

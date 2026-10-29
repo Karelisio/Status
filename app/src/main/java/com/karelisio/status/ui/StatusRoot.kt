@@ -54,6 +54,9 @@ import com.karelisio.status.ui.nav.TweaksRoute
 import com.karelisio.status.ui.nav.UsageRoute
 import com.karelisio.status.ui.screens.DashboardScreen
 import com.karelisio.status.ui.screens.HistoryScreen
+import com.karelisio.status.ui.screens.AboutScreen
+import com.karelisio.status.ui.nav.AboutRoute
+import com.karelisio.status.ui.components.UpdateSheetHost
 import com.karelisio.status.ui.screens.PermissionsScreen
 import com.karelisio.status.ui.onboarding.OnboardingScreen
 import com.karelisio.status.ui.nav.OnboardingRoute
@@ -131,6 +134,7 @@ fun StatusRoot(startWithOnboarding: Boolean = false) {
                 }
             }
         }
+        if (!startWithOnboarding || showBar) UpdateSheetHost()
     }
 }
 
@@ -161,6 +165,7 @@ private fun NavGraphBuilder.statusGraph(nav: NavHostController) {
     screen<SystemAppsRoute> { SystemAppsScreen(onBack = { nav.popBackStack() }, onOpen = { nav.navigate(it) }) }
     screen<ForceStopRoute> { ForceStopScreen(onBack = { nav.popBackStack() }) }
     screen<AdvancedAccessRoute> { AdvancedAccessScreen(onBack = { nav.popBackStack() }) }
+    screen<AboutRoute> { AboutScreen(onBack = { nav.popBackStack() }) }
     screen<MoreRoute> { MoreScreen(onOpen = { nav.navigate(it) }) }
     screen<AlertsRoute> { AlertsScreen(onBack = { nav.popBackStack() }) }
     screen<PermissionsRoute> { PermissionsScreen(onBack = { nav.popBackStack() }, onReplayOnboarding = { nav.navigate(OnboardingRoute) }) }

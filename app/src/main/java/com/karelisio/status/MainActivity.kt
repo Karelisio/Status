@@ -9,6 +9,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.karelisio.status.ui.StatusRoot
 import com.karelisio.status.ui.theme.StatusTheme
+import com.karelisio.status.update.UpdateController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -30,7 +31,10 @@ class MainActivity : ComponentActivity() {
         }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch { onboardingDone.value = AppGraph.settings.current().onboardingDone }
+        lifecycleScope.launch {
+            onboardingDone.value = AppGraph.settings.current().onboardingDone
+            UpdateController.checkIfDue()
+        }
 
         setContent {
             StatusTheme {

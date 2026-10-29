@@ -9,7 +9,7 @@ plugins {
 // Values injected by CI (see .github/workflows/release.yml); local builds fall back to defaults.
 val ciVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 val ciVersionName = System.getenv("VERSION_NAME")?.removePrefix("v") ?: "0.1.0-dev"
-val releasesRepo = System.getenv("RELEASES_REPO")?.takeIf { it.isNotBlank() } ?: "karelisio/status"
+val releasesRepo = System.getenv("RELEASES_REPO")?.takeIf { it.isNotBlank() } ?: "Karelisio/Status"
 
 android {
     namespace = "com.karelisio.status"
