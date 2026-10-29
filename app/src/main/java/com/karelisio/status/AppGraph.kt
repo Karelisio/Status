@@ -7,6 +7,9 @@ import com.karelisio.status.data.prefs.SettingsStore
 import com.karelisio.status.history.HistoryRecorder
 import com.karelisio.status.history.HistoryRepository
 import com.karelisio.status.metrics.MetricsRepository
+import com.karelisio.status.usage.AppInfoCache
+import com.karelisio.status.usage.DataUsageRepository
+import com.karelisio.status.usage.ScreenTimeRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +25,9 @@ object AppGraph {
     val settings by lazy { SettingsStore(app) }
     val metrics by lazy { MetricsRepository(app, scope) }
     val history by lazy { HistoryRepository(database.snapshots()) }
+    val apps by lazy { AppInfoCache(app) }
+    val dataUsage by lazy { DataUsageRepository(app, apps) }
+    val screenTime by lazy { ScreenTimeRepository(app, apps) }
 
     fun init(context: Context) {
         if (!::app.isInitialized) app = context.applicationContext
