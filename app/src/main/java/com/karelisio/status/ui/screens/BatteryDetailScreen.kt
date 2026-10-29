@@ -24,6 +24,7 @@ import com.karelisio.status.ui.components.AreaLineChart
 import com.karelisio.status.ui.components.AnimatedCounter
 import com.karelisio.status.ui.components.ScreenScaffold
 import com.karelisio.status.ui.components.cascadeIn
+import com.karelisio.status.ui.components.timeSeries
 import com.karelisio.status.ui.components.sharedBoundsIfAvailable
 import com.karelisio.status.ui.theme.NumberStyle
 import com.karelisio.status.util.Format
@@ -58,14 +59,16 @@ fun BatteryDetailScreen(onBack: () -> Unit) {
         }
         item(key = "chart") {
             val d = history
+            val series = d?.let { timeSeries(it.points, it.from, 3_600_000L, { p -> p.timestamp }, { p -> p.batteryLevel.toDouble() }) }
             ChartCard("Dernières 24 h", null, Modifier.cascadeIn(2)) {
                 AreaLineChart(
-                    x = d?.points?.map { (it.timestamp - d.from) / 3_600_000.0 }.orEmpty(),
-                    y = d?.points?.map { it.batteryLevel.toDouble() }.orEmpty(),
+                    x = series?.first.orEmpty(),
+                    y = series?.second.orEmpty(),
                     color = MaterialTheme.colorScheme.primary,
                     minY = 0.0, maxY = 100.0,
-                    xFormatter = { "${it.toInt()}h" },
+                    xFormatter = { v -> d?.let { java.text.SimpleDateFormat("HH'h'", java.util.Locale.getDefault()).format(java.util.Date(it.from + (v * 3_600_000).toLong())) } ?: "" },
                     yFormatter = { "${it.toInt()} %" },
+                    labelSpacing = 16,
                 )
             }
         }

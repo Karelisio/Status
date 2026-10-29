@@ -51,7 +51,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.karelisio.status.AppGraph
 import com.karelisio.status.metrics.CpuInfo
 import com.karelisio.status.metrics.LiveMetrics
-import com.karelisio.status.metrics.MetricsRepository
 import com.karelisio.status.metrics.Transport
 import com.karelisio.status.ui.components.AnimatedCounter
 import com.karelisio.status.ui.components.BreathingBatteryGauge
@@ -72,7 +71,11 @@ import kotlin.math.abs
 fun DashboardScreen(onOpen: (Any) -> Unit) {
     val live by AppGraph.metrics.live.collectAsStateWithLifecycle()
     val settings by AppGraph.settings.settings.collectAsStateWithLifecycle(null)
-    val overheat = (settings?.overheatThresholdC ?: 42).toFloat()
+    DashboardContent(live, (settings?.overheatThresholdC ?: 42).toFloat(), onOpen)
+}
+
+@Composable
+fun DashboardContent(live: LiveMetrics?, overheat: Float, onOpen: (Any) -> Unit) {
     val haptics = LocalHapticFeedback.current
 
     ScreenScaffold(title = "Status", subtitle = "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${Build.MODEL}") {
@@ -102,7 +105,7 @@ fun DashboardScreen(onOpen: (Any) -> Unit) {
                     icon = Icons.Rounded.DeveloperBoard,
                     level = StatusLevel.of(cpu.load ?: 0f, 0.7f, 0.9f),
                     progress = cpu.load,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
                 MetricCard(
                     title = "Thermique",
@@ -117,7 +120,7 @@ fun DashboardScreen(onOpen: (Any) -> Unit) {
                         m.thermal.status >= PowerManager.THERMAL_STATUS_MODERATE -> StatusLevel.WARNING
                         else -> StatusLevel.NORMAL
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
             }
         }
@@ -130,7 +133,7 @@ fun DashboardScreen(onOpen: (Any) -> Unit) {
                     icon = Icons.Rounded.Memory,
                     level = StatusLevel.of(m.memory.usedRatio, 0.8f, 0.92f),
                     progress = m.memory.usedRatio,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
                 MetricCard(
                     title = "Stockage",
@@ -139,7 +142,7 @@ fun DashboardScreen(onOpen: (Any) -> Unit) {
                     icon = Icons.Rounded.SdStorage,
                     level = StatusLevel.ofLow(m.storage.freePct, 20f, 10f),
                     progress = m.storage.usedRatio,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
             }
         }
@@ -151,14 +154,14 @@ fun DashboardScreen(onOpen: (Any) -> Unit) {
                     subtitle = "Santé : ${Labels.health(m.battery.health)}",
                     icon = Icons.Rounded.DeviceThermostat,
                     level = StatusLevel.of(m.battery.tempC, overheat - 4f, overheat),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
                 MetricCard(
                     title = "Allumé depuis",
                     value = Format.duration(m.uptimeMs),
                     icon = Icons.Rounded.Timer,
                     level = StatusLevel.NORMAL,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
             }
         }
@@ -278,7 +281,7 @@ private fun NetworkCard(m: LiveMetrics, modifier: Modifier) {
             EcgTrace(
                 rx = m.rxHistory,
                 tx = m.txHistory,
-                windowSize = MetricsRepository.WINDOW / 2,
+                windowSize = 14,
                 rxColor = cs.primary,
                 txColor = cs.tertiary,
                 modifier = Modifier.fillMaxWidth().height(110.dp),

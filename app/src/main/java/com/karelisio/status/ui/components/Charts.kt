@@ -47,6 +47,7 @@ fun AreaLineChart(
     maxY: Double? = null,
     xFormatter: (Double) -> String = { it.toInt().toString() },
     yFormatter: (Double) -> String = { it.toInt().toString() },
+    labelSpacing: Int = 1,
 ) {
     if (x.size < 2) {
         EmptyChart(modifier.height(height))
@@ -59,6 +60,7 @@ fun AreaLineChart(
         fill = LineCartesianLayer.LineFill.single(fill(color)),
         areaFill = LineCartesianLayer.AreaFill.single(
             fill(Brush.verticalGradient(listOf(color.copy(alpha = 0.35f), Color.Transparent)).toShaderProvider()),
+            splitY = { minY ?: 0.0 },
         ),
         pointConnector = LineCartesianLayer.PointConnector.cubic(),
     )
@@ -80,6 +82,7 @@ fun AreaLineChart(
                 tick = null,
                 guideline = null,
                 valueFormatter = CartesianValueFormatter { _, v, _ -> xFormatter(v) },
+                itemPlacer = remember(labelSpacing) { HorizontalAxis.ItemPlacer.aligned(spacing = { labelSpacing }) },
             ),
         ),
         modelProducer = producer,
@@ -97,6 +100,7 @@ fun StackedColumnChart(
     height: Dp = 180.dp,
     xFormatter: (Double) -> String = { it.toInt().toString() },
     yFormatter: (Double) -> String = { it.toInt().toString() },
+    labelSpacing: Int = 1,
 ) {
     if (series.isEmpty() || series.first().isEmpty() || series.all { s -> s.all { it == 0.0 } }) {
         EmptyChart(modifier.height(height))
@@ -122,6 +126,7 @@ fun StackedColumnChart(
             bottomAxis = HorizontalAxis.rememberBottom(
                 label = label, line = null, tick = null, guideline = null,
                 valueFormatter = CartesianValueFormatter { _, v, _ -> xFormatter(v) },
+                itemPlacer = remember(labelSpacing) { HorizontalAxis.ItemPlacer.aligned(spacing = { labelSpacing }) },
             ),
         ),
         modelProducer = producer,
@@ -139,4 +144,15 @@ private fun EmptyChart(modifier: Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/**
+ * Places time-stamped points on a quarter-unit grid (unit = [unitMs]) so Vico's x step stays
+ * regular even with irregular plug/unplug events; keeps the last point of each slot.
+ */
+fun <T> timeSeries(points: List<T>, from: Long, unitMs: Long, ts: (T) -> Long, value: (T) -> Double): Pair<List<Double>, List<Double>> {
+    val slots = LinkedHashMap<Double, Double>()
+    points.forEach { p -> slots[kotlin.math.round((ts(p) - from).toDouble() / unitMs * 4) / 4] = value(p) }
+    val sorted = slots.entries.sortedBy { it.key }
+    return sorted.map { it.key } to sorted.map { it.value }
 }

@@ -43,6 +43,7 @@ import com.karelisio.status.ui.components.ScreenScaffold
 import com.karelisio.status.ui.components.SectionHeader
 import com.karelisio.status.ui.components.StackedColumnChart
 import com.karelisio.status.ui.components.cascadeIn
+import com.karelisio.status.ui.components.timeSeries
 import com.karelisio.status.util.Format
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -76,17 +77,22 @@ fun HistoryScreen() {
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.historyCharts(d: HistoryData) {
-    val hoursFrom = { ts: Long -> (ts - d.from) / 3_600_000.0 }
+    val unit = d.range.bucketMs
     val xFormat = xFormatter(d)
+    val spacing = when (d.range) { HistoryRange.DAY -> 16; HistoryRange.WEEK -> 4; HistoryRange.MONTH -> 20 }
+    val bucketSpacing = when (d.range) { HistoryRange.DAY -> 4; HistoryRange.WEEK -> 1; HistoryRange.MONTH -> 5 }
+    val battery = timeSeries(d.points, d.from, unit, { it.timestamp }, { it.batteryLevel.toDouble() })
+    val temp = timeSeries(d.points, d.from, unit, { it.timestamp }, { it.batteryTempC.toDouble() })
     item(key = "battery-${d.range}") {
         ChartCard("Batterie", "${d.points.size} relevés", Modifier.cascadeIn(0)) {
             AreaLineChart(
-                x = d.points.map { hoursFrom(it.timestamp) },
-                y = d.points.map { it.batteryLevel.toDouble() },
+                x = battery.first,
+                y = battery.second,
                 color = MaterialTheme.colorScheme.primary,
                 minY = 0.0, maxY = 100.0,
                 xFormatter = xFormat,
                 yFormatter = { "${it.toInt()} %" },
+                labelSpacing = spacing,
             )
         }
     }
@@ -97,11 +103,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historyCharts(d: Hist
             Modifier.cascadeIn(1),
         ) {
             AreaLineChart(
-                x = d.points.map { hoursFrom(it.timestamp) },
-                y = d.points.map { it.batteryTempC.toDouble() },
+                x = temp.first,
+                y = temp.second,
                 color = MaterialTheme.colorScheme.tertiary,
+                minY = temp.second.minOrNull()?.let { kotlin.math.floor(it - 2) },
+                maxY = temp.second.maxOrNull()?.let { kotlin.math.ceil(it + 2) },
                 xFormatter = xFormat,
                 yFormatter = { "${it.toInt()}°" },
+                labelSpacing = spacing,
             )
         }
     }
@@ -117,6 +126,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historyCharts(d: Hist
                 colors = listOf(mobileColor, wifiColor),
                 xFormatter = { i -> d.buckets.getOrNull(i.toInt())?.let { bucketLabel(d, it.startMs) } ?: "" },
                 yFormatter = { if (it >= 1000) "${(it / 1000).toInt()} Go" else "${it.toInt()} Mo" },
+                labelSpacing = bucketSpacing,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Legend(mobileColor, "Mobile")
@@ -157,8 +167,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historyCharts(d: Hist
 
 private val DATE_TIME = SimpleDateFormat("EEE d MMM, HH:mm", Locale.getDefault())
 
-private fun xFormatter(d: HistoryData): (Double) -> String = { hours ->
-    bucketLabel(d, d.from + (hours * 3_600_000).toLong())
+private fun xFormatter(d: HistoryData): (Double) -> String = { units ->
+    bucketLabel(d, d.from + (units * d.range.bucketMs).toLong())
 }
 
 private fun bucketLabel(d: HistoryData, ts: Long): String = when (d.range) {

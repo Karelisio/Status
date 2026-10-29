@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import com.karelisio.status.ui.theme.LocalReduceMotion
-import kotlin.math.log10
 import kotlin.math.max
 
 /** One heartbeat (P, QRS, T) on a unit segment; y in -0.3..1. */
@@ -40,9 +39,10 @@ private fun beatAt(u: Float): Float {
     return 0f
 }
 
+/** Square-root scale relative to the window peak: idle stays flat, bursts stand out. */
 private fun amplitude(rate: Long, peak: Long): Float {
-    if (rate <= 0) return 0.05f
-    return (0.08f + 0.92f * (log10(rate + 1.0) / log10(peak + 1.0)).toFloat()).coerceIn(0.05f, 1f)
+    if (rate <= 0) return 0.04f
+    return (0.06f + 0.94f * kotlin.math.sqrt(rate.toDouble() / peak).toFloat()).coerceIn(0.04f, 1f)
 }
 
 /**
@@ -69,7 +69,9 @@ fun EcgTrace(
         if (reduce) return@LaunchedEffect
         while (true) now = withFrameMillis { it }
     }
-    val peak = max(256_000L, max(rx.maxOrNull() ?: 0, tx.maxOrNull() ?: 0))
+    val rxShown = rx.takeLast(windowSize + 1)
+    val txShown = tx.takeLast(windowSize + 1)
+    val peak = max(256_000L, max(rxShown.maxOrNull() ?: 0, txShown.maxOrNull() ?: 0))
 
     Canvas(
         modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen },
@@ -83,8 +85,8 @@ fun EcgTrace(
         // Baseline grid
         drawLine(rxColor.copy(alpha = 0.12f), Offset(0f, base), Offset(size.width, base), strokeWidth = 1.5f)
 
-        drawBeats(tx, frac, seg, base, -down, peak, txColor, 0.6f)
-        drawBeats(rx, frac, seg, base, up, peak, rxColor, 1f)
+        drawBeats(txShown, frac, seg, base, -down, peak, txColor, 0.6f)
+        drawBeats(rxShown, frac, seg, base, up, peak, rxColor, 1f)
 
         // Fade out toward the past (left)
         drawRect(
@@ -128,7 +130,7 @@ private fun DrawScope.drawBeats(
         }
     }
     val w = 2.5f.coerceAtLeast(size.height * 0.022f) * weight
-    drawPath(path, color.copy(alpha = 0.22f), style = Stroke(w * 4f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(path, color.copy(alpha = 0.14f), style = Stroke(w * 3f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     drawPath(path, color, style = Stroke(w, cap = StrokeCap.Round, join = StrokeJoin.Round))
     val head = Offset(size.width - w * 2, headY)
     drawCircle(color.copy(alpha = 0.25f), radius = w * 4f, center = head)

@@ -146,9 +146,13 @@ fun BreathingBatteryGauge(
                         val px = center.x + (p.x - 0.5f) * inner * 1.8f + sin(phase * 6f + p.wobble) * inner * 0.04f
                         val py = center.y - inner + y * inner * 2f
                         val fade = sin(y * PI.toFloat()).coerceAtLeast(0f)
+                        // Keep the centre (where the percentage sits) clear.
+                        val dx = (px - center.x) / inner
+                        val dy = (py - center.y) / inner
+                        val clear = ((dx * dx / 0.36f + dy * dy / 0.12f) - 1f).coerceIn(0f, 1f)
                         drawCircle(
-                            color = color.copy(alpha = 0.55f * fade * breathAmount),
-                            radius = stroke * 0.16f * p.size,
+                            color = color.copy(alpha = 0.5f * fade * clear * breathAmount),
+                            radius = stroke * 0.12f * p.size,
                             center = Offset(px, py),
                         )
                     }
