@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">Status</string>
     <string name="widget_description">Batterie, température et data restante</string>
+    <string name="permission_control_label">Contrôler Status</string>
+    <string name="permission_control_desc">Appliquer les préréglages de Status et lire leur liste</string>
 </resources>
