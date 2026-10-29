@@ -54,6 +54,9 @@ import com.karelisio.status.ui.nav.TweaksRoute
 import com.karelisio.status.ui.nav.UsageRoute
 import com.karelisio.status.ui.screens.DashboardScreen
 import com.karelisio.status.ui.screens.HistoryScreen
+import com.karelisio.status.ui.screens.MoreScreen
+import com.karelisio.status.ui.screens.AlertsScreen
+import com.karelisio.status.ui.nav.AlertsRoute
 import com.karelisio.status.ui.screens.UsageScreen
 import com.karelisio.status.ui.screens.BatteryDetailScreen
 import com.karelisio.status.ui.nav.BatteryDetailRoute
@@ -140,5 +143,6 @@ private fun NavGraphBuilder.statusGraph(nav: NavHostController) {
     screen<BatteryDetailRoute> { BatteryDetailScreen(onBack = { nav.popBackStack() }) }
     screen<UsageRoute> { UsageScreen() }
     screen<TweaksRoute> { PlaceholderScreen("Tweaks") }
-    screen<MoreRoute> { PlaceholderScreen("Plus") }
+    screen<MoreRoute> { MoreScreen(onOpen = { nav.navigate(it) }) }
+    screen<AlertsRoute> { AlertsScreen(onBack = { nav.popBackStack() }) }
 }

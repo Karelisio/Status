@@ -57,5 +57,24 @@
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".alerts.BootReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".alerts.MonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Surveillance de la charge (seuil, surchauffe) et statistiques live demandées par l'utilisateur" />
+        </service>
     </application>
 </manifest>
