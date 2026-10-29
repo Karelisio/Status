@@ -54,6 +54,16 @@ import com.karelisio.status.ui.nav.TweaksRoute
 import com.karelisio.status.ui.nav.UsageRoute
 import com.karelisio.status.ui.screens.DashboardScreen
 import com.karelisio.status.ui.screens.HistoryScreen
+import com.karelisio.status.ui.screens.TweaksScreen
+import com.karelisio.status.ui.screens.PresetEditScreen
+import com.karelisio.status.ui.screens.SystemAppsScreen
+import com.karelisio.status.ui.screens.ForceStopScreen
+import com.karelisio.status.ui.screens.AdvancedAccessScreen
+import com.karelisio.status.ui.nav.PresetEditRoute
+import com.karelisio.status.ui.nav.SystemAppsRoute
+import com.karelisio.status.ui.nav.ForceStopRoute
+import com.karelisio.status.ui.nav.AdvancedAccessRoute
+import androidx.navigation.toRoute
 import com.karelisio.status.ui.screens.MoreScreen
 import com.karelisio.status.ui.screens.AlertsScreen
 import com.karelisio.status.ui.nav.AlertsRoute
@@ -142,7 +152,11 @@ private fun NavGraphBuilder.statusGraph(nav: NavHostController) {
     screen<HistoryRoute> { HistoryScreen() }
     screen<BatteryDetailRoute> { BatteryDetailScreen(onBack = { nav.popBackStack() }) }
     screen<UsageRoute> { UsageScreen() }
-    screen<TweaksRoute> { PlaceholderScreen("Tweaks") }
+    screen<TweaksRoute> { TweaksScreen(onOpen = { nav.navigate(it) }) }
+    screen<PresetEditRoute> { PresetEditScreen(it.toRoute<PresetEditRoute>().id, onBack = { nav.popBackStack() }) }
+    screen<SystemAppsRoute> { SystemAppsScreen(onBack = { nav.popBackStack() }, onOpen = { nav.navigate(it) }) }
+    screen<ForceStopRoute> { ForceStopScreen(onBack = { nav.popBackStack() }) }
+    screen<AdvancedAccessRoute> { AdvancedAccessScreen(onBack = { nav.popBackStack() }) }
     screen<MoreRoute> { MoreScreen(onOpen = { nav.navigate(it) }) }
     screen<AlertsRoute> { AlertsScreen(onBack = { nav.popBackStack() }) }
 }

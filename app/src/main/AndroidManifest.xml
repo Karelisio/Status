@@ -76,5 +76,18 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Surveillance de la charge (seuil, surchauffe) et statistiques live demandées par l'utilisateur" />
         </service>
+
+        <receiver
+            android:name=".tweaks.CaffeineStopReceiver"
+            android:exported="false" />
+
+        <!-- Shizuku-API binder delivery (works with Shizuku, Shevery and forks) -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
     </application>
 </manifest>

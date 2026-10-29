@@ -14,6 +14,11 @@ import com.karelisio.status.metrics.MetricsRepository
 import com.karelisio.status.usage.AppInfoCache
 import com.karelisio.status.usage.DataUsageRepository
 import com.karelisio.status.usage.ScreenTimeRepository
+import com.karelisio.status.shizuku.ShizukuManager
+import com.karelisio.status.tweaks.CaffeineScheduler
+import com.karelisio.status.tweaks.SettingsBackend
+import com.karelisio.status.tweaks.TweakBackup
+import com.karelisio.status.tweaks.TweakManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,9 +38,13 @@ object AppGraph {
     val dataUsage by lazy { DataUsageRepository(app, apps) }
     val screenTime by lazy { ScreenTimeRepository(app, apps) }
     val alerts by lazy { AlertEngine(app, settings, metrics.system, dataUsage) }
+    val tweaks by lazy { TweakManager(app, SettingsBackend(app), settings, TweakBackup(settings)) }
 
     fun init(context: Context) {
-        if (!::app.isInitialized) app = context.applicationContext
+        if (!::app.isInitialized) {
+            app = context.applicationContext
+            ShizukuManager.init()
+        }
     }
 
     suspend fun onPowerConnected(startService: Boolean = true) {
@@ -63,6 +72,7 @@ object AppGraph {
         SnapshotWorker.schedule(app)
         ChargingTriggerWorker.arm(app)
         ensureMonitor()
+        CaffeineScheduler.onBoot(app)
     }
 
     /** Starts the monitor service if the live notification is on or the phone is charging. */
@@ -74,5 +84,8 @@ object AppGraph {
     }
 
     suspend fun updateWidgets() {
+    }
+
+    fun refreshTiles() {
     }
 }

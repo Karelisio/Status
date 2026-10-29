@@ -40,6 +40,7 @@ fun ScreenScaffold(
     listState: LazyListState = rememberLazyListState(),
     actions: @Composable RowScope.() -> Unit = {},
     floating: @Composable () -> Unit = {},
+    snackbarHostState: androidx.compose.material3.SnackbarHostState? = null,
     content: LazyListScope.() -> Unit,
 ) {
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -64,6 +65,7 @@ fun ScreenScaffold(
             )
         },
         floatingActionButton = floating,
+        snackbarHost = { snackbarHostState?.let { androidx.compose.material3.SnackbarHost(it, Modifier.padding(bottom = if (topLevel) 80.dp else 0.dp)) } },
     ) { inner ->
         val nav = WindowInsets.navigationBars.asPaddingValues()
         LazyColumn(
